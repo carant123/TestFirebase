@@ -28,24 +28,15 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        Log.d("TAGinicioData: "," inicioData")
-
         mDatabase = FirebaseDatabase.getInstance().getReference()
-
         setupPermissions()
-
         activelocalizacion()
-
     }
 
     private fun activelocalizacion() {
         mFusedLocationCliente = LocationServices.getFusedLocationProviderClient(this)
         mFusedLocationCliente.lastLocation.addOnSuccessListener { location: Location? ->
             ltlongi.text = "" + location?.latitude + " " + location?.longitude
-            Log.d("TAGdataLongitudLatitud1", "" + location?.latitude)
-            Log.d("TAGdataLongitudLatitud2", "" + location?.longitude)
-
             val anotherMap = mutableMapOf<String, Double>()
             anotherMap.put("latitud", location!!.latitude)
             anotherMap.put("longitude", location!!.longitude)
