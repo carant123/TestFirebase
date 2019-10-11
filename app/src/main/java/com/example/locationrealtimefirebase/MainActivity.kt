@@ -22,6 +22,7 @@ import androidx.core.app.ComponentActivity.ExtraData
 import androidx.core.content.ContextCompat.getSystemService
 import android.icu.lang.UCharacter.GraphemeClusterBreak.T
 import com.google.firebase.auth.FirebaseAuth
+import java.util.HashMap
 
 
 class MainActivity : AppCompatActivity() {
@@ -106,4 +107,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    fun status(status : String) {
+        val hashMap = HashMap<String, Any>()
+        hashMap["status"] = status
+        mDatabase.updateChildren(hashMap)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        status("online")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        status("offline")
+    }
+
 }
