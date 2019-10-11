@@ -18,6 +18,7 @@ class LoginActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
 
         btn_login.setOnClickListener {
+
             var txt_email : String = email.text.toString()
             var txt_password : String = password.text.toString()
 
@@ -42,6 +43,13 @@ class LoginActivity : AppCompatActivity() {
                     }
             }
 
+        }
+
+        forgot_password.setOnClickListener {
+            val intent = Intent(this@LoginActivity, RegisterActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+            finish()
         }
 
 
