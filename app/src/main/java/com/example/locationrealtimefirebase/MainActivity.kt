@@ -2,6 +2,7 @@ package com.example.locationrealtimefirebase
 
 import android.Manifest
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
+import android.content.AbstractThreadedSyncAdapter
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
@@ -13,41 +14,158 @@ import androidx.core.app.ActivityCompat.*
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
 import kotlinx.android.synthetic.main.activity_main.*
 import com.google.firebase.auth.FirebaseUser
 import androidx.core.app.ComponentActivity
 import androidx.core.app.ComponentActivity.ExtraData
 import androidx.core.content.ContextCompat.getSystemService
 import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.Menu
+import android.view.MenuItem
+import androidx.annotation.NonNull
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.locationrealtimefirebase.Adapter.UserAdapter
+import com.example.locationrealtimefirebase.Model.User
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.*
 import java.util.HashMap
 
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var mFusedLocationCliente : FusedLocationProviderClient
+    lateinit var mDatabase : DatabaseReference
+    lateinit var mDatabaseUsers : DatabaseReference
+    lateinit var firebaseUser: FirebaseUser
 
     private val ACCESS_FINE_LOCATION_CODE = 101
     private val ACCESS_COARSE_LOCATION_CODE = 102
 
-    lateinit var mDatabase : DatabaseReference
-    lateinit var firebaseUser: FirebaseUser
+    lateinit var userAdapter: UserAdapter
+    lateinit var mUsers : ArrayList<User>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        mFusedLocationCliente = LocationServices.getFusedLocationProviderClient(this);
-        //mDatabase = FirebaseDatabase.getInstance().getReference()
+        setSupportActionBar(toolbar)
+        supportActionBar?.setTitle("")
+        initializeRecycleview()
 
-        firebaseUser = FirebaseAuth.getInstance().getCurrentUser()!!;
-        mDatabase = FirebaseDatabase.getInstance().getReference("Users").child(firebaseUser.getUid());
+        mUsers = ArrayList()
+
+        mFusedLocationCliente = LocationServices.getFusedLocationProviderClient(this);
+        inicializarVarFirebase()
+        initializeSearchUsers()
 
         setupPermissions()
         activelocalizacion()
 
+    }
+
+    private fun initializeSearchUsers() {
+
+        search_users.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {
+
+            }
+
+            override fun onTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {
+                searchUsers(charSequence.toString().toLowerCase())
+            }
+
+            override fun afterTextChanged(editable: Editable) {
+
+            }
+        })
+
+    }
+
+    private fun searchUsers(s: String) {
+
+        val fuser = FirebaseAuth.getInstance().currentUser
+        val query = FirebaseDatabase.getInstance().getReference("Users").orderByChild("search")
+            .startAt(s)
+            .endAt(s + "\uf8ff")
+
+        query.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(@NonNull dataSnapshot: DataSnapshot) {
+                mUsers.clear()
+                for (snapshot in dataSnapshot.children) {
+                    val user = snapshot.getValue(User::class.java)!!
+
+                    assert(fuser != null)
+                    if (!user.id.equals(fuser!!.uid)) {
+                        mUsers.add(user)
+                    }
+                }
+
+                userAdapter = UserAdapter(baseContext, mUsers, false)
+                recycler_view.setAdapter(userAdapter)
+            }
+
+            override fun onCancelled(@NonNull databaseError: DatabaseError) {
+
+            }
+        })
+
+    }
+
+    private fun inicializarVarFirebase() {
+        firebaseUser = FirebaseAuth.getInstance().getCurrentUser()!!
+        mDatabaseUsers = FirebaseDatabase.getInstance().getReference("Users")
+        mDatabase = mDatabaseUsers.child(firebaseUser.getUid())
+
+        initializeUsers()
+
+    }
+
+    private fun initializeUsers() {
+
+        mDatabaseUsers.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(@NonNull dataSnapshot: DataSnapshot) {
+                if (search_users.text.toString() == "") {
+                    mUsers.clear()
+                    for (snapshot in dataSnapshot.children) {
+                        val user = snapshot.getValue(User::class.java)
+
+                        if (!user!!.id.equals(firebaseUser.uid)) {
+                            mUsers.add(user)
+                        }
+
+                    }
+
+                    userAdapter = UserAdapter(baseContext, mUsers, false)
+                    recycler_view.setAdapter(userAdapter)
+                }
+            }
+
+            override fun onCancelled(@NonNull databaseError: DatabaseError) {
+
+            }
+        })
+    }
+
+    private fun initializeRecycleview() {
+        recycler_view.setHasFixedSize(true)
+        recycler_view.layoutManager = LinearLayoutManager(baseContext)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.logout) {
+            FirebaseAuth.getInstance().signOut()
+            startActivity(Intent(this@MainActivity, StartActivity::class.java))
+            return true
+        }
+        return false
     }
 
     private fun activelocalizacion() {

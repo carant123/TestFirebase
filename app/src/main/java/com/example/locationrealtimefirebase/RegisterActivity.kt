@@ -73,8 +73,9 @@ class RegisterActivity : AppCompatActivity() {
 
                     reference.setValue(hashMap).addOnCompleteListener { task ->
                         if (task.isSuccessful) {
-                            val intent = Intent(this@RegisterActivity, LoginActivity::class.java)
+                            val intent = Intent(this@RegisterActivity, StartActivity::class.java)
                             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+                            FirebaseAuth.getInstance().signOut()
                             startActivity(intent)
                             finish()
                         }

@@ -14,9 +14,8 @@ class StartActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
-        firebaseUser = FirebaseAuth.getInstance().currentUser!!
-
-        if(firebaseUser != null) {
+        FirebaseAuth.getInstance().currentUser?.let {
+            firebaseUser = it
             var intent = Intent(this@StartActivity, MainActivity::class.java)
             startActivity(intent)
             finish()

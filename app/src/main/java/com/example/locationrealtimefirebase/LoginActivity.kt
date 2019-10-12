@@ -46,7 +46,7 @@ class LoginActivity : AppCompatActivity() {
         }
 
         forgot_password.setOnClickListener {
-            val intent = Intent(this@LoginActivity, RegisterActivity::class.java)
+            val intent = Intent(this@LoginActivity, StartActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
             finish()
